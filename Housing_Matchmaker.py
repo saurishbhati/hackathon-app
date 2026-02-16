@@ -84,7 +84,7 @@ def show_housing_matchmaker():
 
             folium.Marker(
                 [user_lat, user_lon],
-                popup="Your location",
+                popup=folium.Popup("<b>Your location</b>", max_width=300),
             ).add_to(m)
 
             shelters_added = 0
@@ -95,10 +95,46 @@ def show_housing_matchmaker():
                     continue
 
                 tags = el.get("tags", {}) or {}
-                name = tags.get("name", "Shelter (no name)")
-                popup = name
 
-                folium.Marker([lat, lon], popup=popup).add_to(m)
+                name = tags.get("name")
+                operator_ = tags.get("operator")
+                brand = tags.get("brand")
+                street = tags.get("addr:street")
+                housenumber = tags.get("addr:housenumber")
+                city = tags.get("addr:city")
+                phone = tags.get("phone") or tags.get("contact:phone")
+                website = tags.get("website") or tags.get("contact:website")
+
+                # Build a nicer title
+                title = name or operator_ or brand or "Shelter"
+
+                # Build a simple address line if available
+                address_parts = []
+                if housenumber:
+                    address_parts.append(housenumber)
+                if street:
+                    address_parts.append(street)
+                addr_line = " ".join(address_parts)
+
+                details = []
+                if addr_line:
+                    details.append(addr_line)
+                if city:
+                    details.append(city)
+                if phone:
+                    details.append(f"Phone: {phone}")
+                if website:
+                    details.append(f"Website: {website}")
+
+                popup_html = f"<b>{title}</b>"
+                if details:
+                    popup_html += "<br>" + "<br>".join(details)
+
+                folium.Marker(
+                    [lat, lon],
+                    popup=folium.Popup(popup_html, max_width=300),
+                ).add_to(m)
+
                 shelters_added += 1
 
             st.session_state["folium_map"] = m
